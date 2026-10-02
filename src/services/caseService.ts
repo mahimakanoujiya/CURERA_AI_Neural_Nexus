@@ -1,4 +1,4 @@
-import type { Case, TimelineEvent, CaseStatus } from '@/types';
+import type { Case, TimelineEvent, CaseStatus, PatientAnswer } from '@/types';
 import { generateCaseId, generatePatientId, generateCaseSummary } from './aiService';
 
 function nowISO(): string {
@@ -43,6 +43,7 @@ export async function createCaseFromInput(
     symptomsMentioned: summary.symptomsMentioned,
     relevantInformation: summary.relevantInformation,
     additionalQuestions: summary.additionalQuestions,
+    patientAnswers: [],
     emergencyFlag: summary.emergencyFlag,
     status: 'NEW',
     professionalNotes: '',
@@ -118,4 +119,14 @@ export function markUnderReview(caseData: Case): Case {
   if (caseData.status !== 'NEW') return caseData;
   const updated = updateCaseStatus(caseData, 'UNDER_REVIEW');
   return addTimelineEvent(updated, 'professional_reviewed', 'Professional opened case for review');
+}
+
+export function savePatientAnswers(caseData: Case, answers: PatientAnswer[]): Case {
+  const updated = addTimelineEvent(
+    caseData,
+    'patient_info_provided',
+    'Patient provided additional information',
+    `${answers.length} question(s) answered by patient`
+  );
+  return { ...updated, patientAnswers: answers };
 }

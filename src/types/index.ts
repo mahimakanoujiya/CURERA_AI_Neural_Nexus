@@ -15,6 +15,7 @@ export type TimelineEventType =
   | 'case_accepted'
   | 'info_requested'
   | 'appointment_scheduled'
+  | 'patient_info_provided'
   | 'case_completed';
 
 export interface TimelineEvent {
@@ -39,12 +40,28 @@ export interface Appointment {
   timestamp: string;
 }
 
+export type AnswerType = 'yes_no' | 'scale' | 'text';
+
+export interface ClarificationQuestion {
+  id: string;
+  question: string;
+  answerType: AnswerType;
+}
+
+export interface PatientAnswer {
+  questionId: string;
+  question: string;
+  answerType: AnswerType;
+  answer: string | number;
+  additionalDetails?: string;
+}
+
 export interface CaseSummary {
   mainConcern: string;
   duration: string;
   symptomsMentioned: string[];
   relevantInformation: string;
-  additionalQuestions: string[];
+  additionalQuestions: ClarificationQuestion[];
   emergencyFlag: boolean;
 }
 
@@ -59,7 +76,8 @@ export interface Case {
   duration: string;
   symptomsMentioned: string[];
   relevantInformation: string;
-  additionalQuestions: string[];
+  additionalQuestions: ClarificationQuestion[];
+  patientAnswers: PatientAnswer[];
   emergencyFlag: boolean;
   status: CaseStatus;
   professionalNotes: string;

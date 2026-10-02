@@ -16,6 +16,7 @@ import { useCases } from '@/context/CaseContext';
 import { useToast } from '@/context/ToastContext';
 import StatusBadge from '@/components/StatusBadge';
 import CaseSummaryCard from '@/components/CaseSummaryCard';
+import PatientAnswersDisplay from '@/components/PatientAnswersDisplay';
 import Timeline from '@/components/Timeline';
 import Modal from '@/components/Modal';
 import type { CaseSummary } from '@/types';
@@ -157,6 +158,13 @@ export default function CaseDetail() {
           <div className="animate-fade-in-up" style={{ animationDelay: '120ms' }}>
             <CaseSummaryCard summary={summary} />
           </div>
+
+          {/* Patient-provided additional answers */}
+          {caseData.patientAnswers.length > 0 && (
+            <div className="animate-fade-in-up" style={{ animationDelay: '140ms' }}>
+              <PatientAnswersDisplay answers={caseData.patientAnswers} />
+            </div>
+          )}
 
           {/* Clarification requests */}
           {caseData.clarificationRequests.length > 0 && (

@@ -76,14 +76,21 @@ export default function CaseSummaryCard({ summary, showEmergency = true }: CaseS
           <ul className="space-y-2">
             {summary.additionalQuestions.map((q, i) => (
               <li
-                key={i}
+                key={q.id}
                 className="flex items-start gap-2.5 rounded-lg bg-ink-50 border border-ink-200/60 px-3 py-2.5 animate-fade-in-up"
                 style={{ animationDelay: `${i * 80}ms` }}
               >
                 <span className="w-5 h-5 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">
                   {i + 1}
                 </span>
-                <p className="text-sm text-ink-700 leading-relaxed">{q}</p>
+                <div className="flex-1">
+                  <p className="text-sm text-ink-700 leading-relaxed">{q.question}</p>
+                  <span className="inline-flex items-center gap-1 mt-1 text-[10px] text-ink-400 font-medium uppercase tracking-wide">
+                    {q.answerType === 'yes_no' && 'Yes / No question'}
+                    {q.answerType === 'scale' && '1–10 scale'}
+                    {q.answerType === 'text' && 'Text answer'}
+                  </span>
+                </div>
               </li>
             ))}
           </ul>

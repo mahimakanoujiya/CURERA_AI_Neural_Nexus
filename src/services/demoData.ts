@@ -1,8 +1,16 @@
-import type { Case } from '@/types';
+import type { Case, ClarificationQuestion, PatientAnswer } from '@/types';
 import { createCaseFromInput } from './caseService';
 
 const DEMO_INPUT =
   "I've been feeling unwell since yesterday. I have a headache and feel tired. I also haven't been feeling like eating much.";
+
+function makeQuestions(qs: { q: string; t: ClarificationQuestion['answerType'] }[]): ClarificationQuestion[] {
+  return qs.map((item, i) => ({
+    id: `demo-q-${i}`,
+    question: item.q,
+    answerType: item.t,
+  }));
+}
 
 export async function createDemoCases(): Promise<Case[]> {
   const demoCase = await createCaseFromInput(DEMO_INPUT, 'voice');
@@ -25,12 +33,13 @@ export async function createDemoCases(): Promise<Case[]> {
     symptomsMentioned: ['Sore throat', 'Cough', 'Congestion', 'Sneezing'],
     relevantInformation:
       'It started this week and seems to be getting worse.',
-    additionalQuestions: [
-      'Have you noticed any specific triggers that make the symptoms better or worse?',
-      'Are you currently taking any medications or supplements?',
-      'How is the concern affecting your daily activities?',
-      'Have you tried any home remedies or over-the-counter treatments so far?',
-    ],
+    additionalQuestions: makeQuestions([
+      { q: 'Have you noticed any specific triggers that make the symptoms better or worse?', t: 'text' },
+      { q: 'Are you currently taking any medications or supplements?', t: 'yes_no' },
+      { q: 'How is the concern affecting your daily activities?', t: 'text' },
+      { q: 'Have you tried any home remedies or over-the-counter treatments so far?', t: 'yes_no' },
+    ]),
+    patientAnswers: [],
     emergencyFlag: false,
     status: 'NEW',
     professionalNotes: '',
@@ -41,6 +50,33 @@ export async function createDemoCases(): Promise<Case[]> {
       { id: 'tl-2', type: 'ai_summary_generated', label: 'AI summary generated', timestamp: minutesAgo(47) },
     ],
   };
+
+  const case3Answers: PatientAnswer[] = [
+    {
+      questionId: 'demo-q-0',
+      question: 'Can you describe the severity of your symptoms on a scale of 1 to 10?',
+      answerType: 'scale',
+      answer: 6,
+    },
+    {
+      questionId: 'demo-q-1',
+      question: 'Have you noticed any specific triggers that make the symptoms better or worse?',
+      answerType: 'text',
+      answer: 'The pain is worse in the mornings, especially after waking up.',
+    },
+    {
+      questionId: 'demo-q-2',
+      question: 'Are you currently taking any medications or supplements?',
+      answerType: 'yes_no',
+      answer: 'No',
+    },
+    {
+      questionId: 'demo-q-3',
+      question: 'Do you have any known allergies or pre-existing conditions?',
+      answerType: 'yes_no',
+      answer: 'Prefer not to answer',
+    },
+  ];
 
   const case3: Case = {
     ...demoCase,
@@ -57,12 +93,13 @@ export async function createDemoCases(): Promise<Case[]> {
     symptomsMentioned: ['Back pain'],
     relevantInformation:
       "It is worse in the mornings and makes it hard to get out of bed. I have not taken anything for it yet.",
-    additionalQuestions: [
-      'Can you describe the severity of the symptoms on a scale of 1 to 10?',
-      'Have you noticed any specific triggers that make the symptoms better or worse?',
-      'Are you currently taking any medications or supplements?',
-      'Do you have any known allergies or pre-existing conditions?',
-    ],
+    additionalQuestions: makeQuestions([
+      { q: 'Can you describe the severity of your symptoms on a scale of 1 to 10?', t: 'scale' },
+      { q: 'Have you noticed any specific triggers that make the symptoms better or worse?', t: 'text' },
+      { q: 'Are you currently taking any medications or supplements?', t: 'yes_no' },
+      { q: 'Do you have any known allergies or pre-existing conditions?', t: 'yes_no' },
+    ]),
+    patientAnswers: case3Answers,
     emergencyFlag: false,
     status: 'AWAITING_PATIENT_INFO',
     professionalNotes: '',
@@ -77,10 +114,39 @@ export async function createDemoCases(): Promise<Case[]> {
     timeline: [
       { id: 'tl-1', type: 'patient_submitted', label: 'Patient submitted case', timestamp: minutesAgo(180), detail: 'Input type: voice' },
       { id: 'tl-2', type: 'ai_summary_generated', label: 'AI summary generated', timestamp: minutesAgo(180) },
-      { id: 'tl-3', type: 'professional_reviewed', label: 'Professional opened case for review', timestamp: minutesAgo(125) },
-      { id: 'tl-4', type: 'info_requested', label: 'More information requested', timestamp: minutesAgo(120), detail: 'Could you clarify whether the pain radiates to your legs or stays localized in your lower back? Also, have you had any recent injuries or heavy lifting?' },
+      { id: 'tl-3', type: 'patient_info_provided', label: 'Patient provided additional information', timestamp: minutesAgo(170), detail: '4 question(s) answered by patient' },
+      { id: 'tl-4', type: 'professional_reviewed', label: 'Professional opened case for review', timestamp: minutesAgo(125) },
+      { id: 'tl-5', type: 'info_requested', label: 'More information requested', timestamp: minutesAgo(120), detail: 'Could you clarify whether the pain radiates to your legs or stays localized in your lower back? Also, have you had any recent injuries or heavy lifting?' },
     ],
   };
+
+  const case4Answers: PatientAnswer[] = [
+    {
+      questionId: 'demo-q-0',
+      question: 'Have you noticed any specific triggers that make the symptoms better or worse?',
+      answerType: 'text',
+      answer: 'Work deadlines and evening hours tend to make it worse.',
+    },
+    {
+      questionId: 'demo-q-1',
+      question: 'Are you currently taking any medications or supplements?',
+      answerType: 'yes_no',
+      answer: 'Yes',
+      additionalDetails: 'Melatonin occasionally to help with sleep.',
+    },
+    {
+      questionId: 'demo-q-2',
+      question: 'How is the concern affecting your daily activities?',
+      answerType: 'text',
+      answer: 'Difficulty concentrating at work due to poor sleep.',
+    },
+    {
+      questionId: 'demo-q-3',
+      question: 'Have you tried any home remedies or over-the-counter treatments so far?',
+      answerType: 'yes_no',
+      answer: 'No',
+    },
+  ];
 
   const case4: Case = {
     ...demoCase,
@@ -97,12 +163,13 @@ export async function createDemoCases(): Promise<Case[]> {
     symptomsMentioned: ['Anxiety', 'Insomnia'],
     relevantInformation:
       'I feel on edge during the day and cannot seem to relax.',
-    additionalQuestions: [
-      'Have you noticed any specific triggers that make the symptoms better or worse?',
-      'Are you currently taking any medications or supplements?',
-      'How is the concern affecting your daily activities?',
-      'Have you tried any home remedies or over-the-counter treatments so far?',
-    ],
+    additionalQuestions: makeQuestions([
+      { q: 'Have you noticed any specific triggers that make the symptoms better or worse?', t: 'text' },
+      { q: 'Are you currently taking any medications or supplements?', t: 'yes_no' },
+      { q: 'How is the concern affecting your daily activities?', t: 'text' },
+      { q: 'Have you tried any home remedies or over-the-counter treatments so far?', t: 'yes_no' },
+    ]),
+    patientAnswers: case4Answers,
     emergencyFlag: false,
     status: 'APPOINTMENT_SCHEDULED',
     professionalNotes: '',
@@ -117,10 +184,39 @@ export async function createDemoCases(): Promise<Case[]> {
     timeline: [
       { id: 'tl-1', type: 'patient_submitted', label: 'Patient submitted case', timestamp: minutesAgo(600), detail: 'Input type: text' },
       { id: 'tl-2', type: 'ai_summary_generated', label: 'AI summary generated', timestamp: minutesAgo(600) },
-      { id: 'tl-3', type: 'professional_reviewed', label: 'Professional opened case for review', timestamp: minutesAgo(400) },
-      { id: 'tl-4', type: 'appointment_scheduled', label: 'Appointment scheduled', timestamp: minutesAgo(300), detail: 'Initial consultation appointment on 2026-10-05 at 14:30 — Follow-up to discuss sleep and anxiety management strategies.' },
+      { id: 'tl-3', type: 'patient_info_provided', label: 'Patient provided additional information', timestamp: minutesAgo(580), detail: '4 question(s) answered by patient' },
+      { id: 'tl-4', type: 'professional_reviewed', label: 'Professional opened case for review', timestamp: minutesAgo(400) },
+      { id: 'tl-5', type: 'appointment_scheduled', label: 'Appointment scheduled', timestamp: minutesAgo(300), detail: 'Initial consultation appointment on 2026-10-05 at 14:30 — Follow-up to discuss sleep and anxiety management strategies.' },
     ],
   };
+
+  const case5Answers: PatientAnswer[] = [
+    {
+      questionId: 'demo-q-0',
+      question: 'Can you describe the severity of your symptoms on a scale of 1 to 10?',
+      answerType: 'scale',
+      answer: 8,
+    },
+    {
+      questionId: 'demo-q-1',
+      question: 'Have you noticed any specific triggers that make the symptoms better or worse?',
+      answerType: 'text',
+      answer: 'Symptoms seem to worsen in the evening.',
+    },
+    {
+      questionId: 'demo-q-2',
+      question: 'Are you currently taking any medications or supplements?',
+      answerType: 'yes_no',
+      answer: 'No',
+    },
+    {
+      questionId: 'demo-q-3',
+      question: 'Has anyone in your household experienced similar symptoms recently?',
+      answerType: 'yes_no',
+      answer: 'Yes',
+      additionalDetails: 'My child had a similar fever last week.',
+    },
+  ];
 
   const case5: Case = {
     ...demoCase,
@@ -137,12 +233,13 @@ export async function createDemoCases(): Promise<Case[]> {
     symptomsMentioned: ['Fever', 'Body aches', 'Congestion'],
     relevantInformation:
       'I feel chills and have been shivering. I also have a runny nose.',
-    additionalQuestions: [
-      'Can you describe the severity of the symptoms on a scale of 1 to 10?',
-      'Have you noticed any specific triggers that make the symptoms better or worse?',
-      'Are you currently taking any medications or supplements?',
-      'Has anyone in your household experienced similar symptoms recently?',
-    ],
+    additionalQuestions: makeQuestions([
+      { q: 'Can you describe the severity of your symptoms on a scale of 1 to 10?', t: 'scale' },
+      { q: 'Have you noticed any specific triggers that make the symptoms better or worse?', t: 'text' },
+      { q: 'Are you currently taking any medications or supplements?', t: 'yes_no' },
+      { q: 'Has anyone in your household experienced similar symptoms recently?', t: 'yes_no' },
+    ]),
+    patientAnswers: case5Answers,
     emergencyFlag: false,
     status: 'ACCEPTED',
     professionalNotes: '',
@@ -151,8 +248,9 @@ export async function createDemoCases(): Promise<Case[]> {
     timeline: [
       { id: 'tl-1', type: 'patient_submitted', label: 'Patient submitted case', timestamp: minutesAgo(720), detail: 'Input type: voice' },
       { id: 'tl-2', type: 'ai_summary_generated', label: 'AI summary generated', timestamp: minutesAgo(720) },
-      { id: 'tl-3', type: 'professional_reviewed', label: 'Professional opened case for review', timestamp: minutesAgo(500) },
-      { id: 'tl-4', type: 'case_accepted', label: 'Case accepted by professional', timestamp: minutesAgo(400), detail: 'Case accepted for follow-up. No diagnosis or treatment has been prescribed.' },
+      { id: 'tl-3', type: 'patient_info_provided', label: 'Patient provided additional information', timestamp: minutesAgo(710), detail: '4 question(s) answered by patient' },
+      { id: 'tl-4', type: 'professional_reviewed', label: 'Professional opened case for review', timestamp: minutesAgo(500) },
+      { id: 'tl-5', type: 'case_accepted', label: 'Case accepted by professional', timestamp: minutesAgo(400), detail: 'Case accepted for follow-up. No diagnosis or treatment has been prescribed.' },
     ],
   };
 

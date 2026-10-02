@@ -1,4 +1,4 @@
-import type { CaseSummary } from '@/types';
+import type { CaseSummary, ClarificationQuestion, AnswerType } from '@/types';
 
 export const DEMO_MODE = true;
 
@@ -55,16 +55,22 @@ const DURATION_PATTERNS = [
   { regex: /this (morning|afternoon|evening|week|month)/i, label: 'Since $1' },
 ];
 
-const CLARIFICATION_TEMPLATES = [
-  'Can you describe the severity of the symptoms on a scale of 1 to 10?',
-  'Have you noticed any specific triggers that make the symptoms better or worse?',
-  'Are you currently taking any medications or supplements?',
-  'Do you have any known allergies or pre-existing conditions?',
-  'Has anyone in your household experienced similar symptoms recently?',
-  'Have you traveled recently or been in contact with anyone who was ill?',
-  'How is the concern affecting your daily activities?',
-  'Have you tried any home remedies or over-the-counter treatments so far?',
+const QUESTION_POOL: { question: string; answerType: AnswerType }[] = [
+  { question: 'Can you describe the severity of your symptoms on a scale of 1 to 10?', answerType: 'scale' },
+  { question: 'Have you noticed any specific triggers that make the symptoms better or worse?', answerType: 'text' },
+  { question: 'Are you currently taking any medications or supplements?', answerType: 'yes_no' },
+  { question: 'Do you have any known allergies or pre-existing conditions?', answerType: 'yes_no' },
+  { question: 'Has anyone in your household experienced similar symptoms recently?', answerType: 'yes_no' },
+  { question: 'Have you traveled recently or been in contact with anyone who was ill?', answerType: 'yes_no' },
+  { question: 'How is the concern affecting your daily activities?', answerType: 'text' },
+  { question: 'Have you tried any home remedies or over-the-counter treatments so far?', answerType: 'yes_no' },
 ];
+
+let questionIdCounter = 0;
+function makeQuestionId(): string {
+  questionIdCounter++;
+  return `q-${Date.now()}-${questionIdCounter}`;
+}
 
 function detectEmergency(input: string): boolean {
   const lower = input.toLowerCase();
@@ -122,16 +128,16 @@ function extractRelevantInfo(input: string): string {
   return contextSentences.join('. ');
 }
 
-function generateClarificationQuestions(symptomCount: number): string[] {
-  const questions: string[] = [];
-  const shuffled = [...CLARIFICATION_TEMPLATES].sort(() => Math.random() - 0.5);
+function generateClarificationQuestions(symptomCount: number): ClarificationQuestion[] {
+  const count = Math.min(symptomCount > 2 ? 4 : 3, QUESTION_POOL.length);
+  const shuffled = [...QUESTION_POOL].sort(() => Math.random() - 0.5);
+  const selected = shuffled.slice(0, count);
 
-  const count = Math.min(symptomCount > 2 ? 4 : 3, shuffled.length);
-  for (let i = 0; i < count; i++) {
-    questions.push(shuffled[i]);
-  }
-
-  return questions;
+  return selected.map((q) => ({
+    id: makeQuestionId(),
+    question: q.question,
+    answerType: q.answerType,
+  }));
 }
 
 export async function generateCaseSummary(patientInput: string): Promise<CaseSummary> {

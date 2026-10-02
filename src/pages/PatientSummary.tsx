@@ -4,12 +4,13 @@ import { ArrowLeft, Pencil, Send, CheckCircle2 } from 'lucide-react';
 import { useCases } from '@/context/CaseContext';
 import { useToast } from '@/context/ToastContext';
 import CaseSummaryCard from '@/components/CaseSummaryCard';
-import type { CaseSummary } from '@/types';
+import AnswerForm from '@/components/AnswerForm';
+import type { CaseSummary, PatientAnswer } from '@/types';
 
 export default function PatientSummary() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getCase } = useCases();
+  const { getCase, savePatientAnswersById } = useCases();
   const { showToast } = useToast();
   const [editMode, setEditMode] = useState(false);
   const [editInput, setEditInput] = useState('');
@@ -42,7 +43,13 @@ export default function PatientSummary() {
     emergencyFlag: caseData.emergencyFlag,
   };
 
-  const handleSubmit = () => {
+  const handleSaveAnswers = (answers: PatientAnswer[]) => {
+    savePatientAnswersById(caseData.id, answers);
+    showToast('Additional information saved', 'success');
+  };
+
+  const handleSubmitForReview = (answers: PatientAnswer[]) => {
+    savePatientAnswersById(caseData.id, answers);
     showToast('Case submitted for professional review', 'success');
     setTimeout(() => navigate('/professional'), 800);
   };
@@ -108,21 +115,37 @@ export default function PatientSummary() {
       </div>
 
       {/* AI Summary */}
-      <div className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+      <div className="mb-5 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
         <CaseSummaryCard summary={summary} />
       </div>
 
-      {/* Actions */}
-      <div className="mt-6 flex flex-col sm:flex-row gap-3 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-        <button onClick={() => setEditMode(true)} className="btn-secondary flex-1">
-          <Pencil className="w-4.5 h-4.5" />
-          Edit Information
-        </button>
-        <button onClick={handleSubmit} className="btn-primary flex-1">
-          <Send className="w-4.5 h-4.5" />
-          Submit for Professional Review
-        </button>
-      </div>
+      {/* Additional Information (Interactive Answers) */}
+      {caseData.additionalQuestions.length > 0 && (
+        <div className="card p-6 mb-5 animate-fade-in-up" style={{ animationDelay: '150ms' }}>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center">
+              <CheckCircle2 className="w-4.5 h-4.5 text-brand-600" />
+            </div>
+            <h3 className="text-lg font-bold font-display text-ink-900">Additional Information</h3>
+          </div>
+          <AnswerForm
+            questions={caseData.additionalQuestions}
+            initialAnswers={caseData.patientAnswers}
+            onSave={handleSaveAnswers}
+            onSubmit={handleSubmitForReview}
+          />
+        </div>
+      )}
+
+      {/* Fallback submit button if no questions */}
+      {caseData.additionalQuestions.length === 0 && (
+        <div className="mt-6 flex flex-col sm:flex-row gap-3 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+          <button onClick={() => handleSubmitForReview([])} className="btn-primary flex-1">
+            <Send className="w-4.5 h-4.5" />
+            Submit for Professional Review
+          </button>
+        </div>
+      )}
 
       <div className="mt-6 flex items-center justify-center gap-2 text-xs text-ink-400">
         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />

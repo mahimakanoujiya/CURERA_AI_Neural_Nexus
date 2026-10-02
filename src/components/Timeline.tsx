@@ -7,6 +7,7 @@ import {
   HelpCircle,
   CalendarClock,
   FileText,
+  ClipboardCheck,
 } from 'lucide-react';
 
 const EVENT_CONFIG: Record<TimelineEvent['type'], { icon: typeof Mic; color: string; bg: string; ring: string }> = {
@@ -16,6 +17,7 @@ const EVENT_CONFIG: Record<TimelineEvent['type'], { icon: typeof Mic; color: str
   case_accepted: { icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50', ring: 'ring-emerald-200' },
   info_requested: { icon: HelpCircle, color: 'text-orange-600', bg: 'bg-orange-50', ring: 'ring-orange-200' },
   appointment_scheduled: { icon: CalendarClock, color: 'text-accent-600', bg: 'bg-accent-50', ring: 'ring-accent-200' },
+  patient_info_provided: { icon: ClipboardCheck, color: 'text-brand-600', bg: 'bg-brand-50', ring: 'ring-brand-200' },
   case_completed: { icon: FileText, color: 'text-ink-500', bg: 'bg-ink-100', ring: 'ring-ink-200' },
 };
 

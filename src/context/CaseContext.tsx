@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode, useCallback } from 'react';
-import type { Case, Role } from '@/types';
-import { createCaseFromInput, acceptCase, requestMoreInfo, scheduleAppointment, markUnderReview } from '@/services/caseService';
+import type { Case, Role, PatientAnswer } from '@/types';
+import { createCaseFromInput, acceptCase, requestMoreInfo, scheduleAppointment, markUnderReview, savePatientAnswers } from '@/services/caseService';
 import { createDemoCases } from '@/services/demoData';
 
 interface CaseContextValue {
@@ -13,11 +13,12 @@ interface CaseContextValue {
   requestMoreInfoById: (id: string, message: string) => void;
   scheduleAppointmentById: (id: string, date: string, time: string, type: string, note?: string) => void;
   markUnderReviewById: (id: string) => void;
+  savePatientAnswersById: (id: string, answers: PatientAnswer[]) => void;
 }
 
 const CaseContext = createContext<CaseContextValue | null>(null);
 
-const STORAGE_KEY = 'curera_cases_v1';
+const STORAGE_KEY = 'curera_cases_v2';
 const ROLE_KEY = 'curera_role_v1';
 
 export function CaseProvider({ children }: { children: ReactNode }) {
@@ -84,6 +85,10 @@ export function CaseProvider({ children }: { children: ReactNode }) {
     setCases((prev) => prev.map((c) => (c.id === id ? markUnderReview(c) : c)));
   }, []);
 
+  const savePatientAnswersById = useCallback((id: string, answers: PatientAnswer[]) => {
+    setCases((prev) => prev.map((c) => (c.id === id ? savePatientAnswers(c, answers) : c)));
+  }, []);
+
   return (
     <CaseContext.Provider
       value={{
@@ -96,6 +101,7 @@ export function CaseProvider({ children }: { children: ReactNode }) {
         requestMoreInfoById,
         scheduleAppointmentById,
         markUnderReviewById,
+        savePatientAnswersById,
       }}
     >
       {children}
