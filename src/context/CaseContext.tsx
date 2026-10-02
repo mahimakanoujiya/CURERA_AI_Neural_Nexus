@@ -18,7 +18,7 @@ interface CaseContextValue {
 
 const CaseContext = createContext<CaseContextValue | null>(null);
 
-const STORAGE_KEY = 'curera_cases_v2';
+const STORAGE_KEY = 'curera_cases_v3';
 const ROLE_KEY = 'curera_role_v1';
 
 export function CaseProvider({ children }: { children: ReactNode }) {

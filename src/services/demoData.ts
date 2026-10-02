@@ -18,6 +18,7 @@ export async function createDemoCases(): Promise<Case[]> {
   const now = Date.now();
   const minutesAgo = (m: number) => new Date(now - m * 60000).toISOString();
 
+  // Case 2: Sore throat + cough + congestion + sneezing — NEW, no patient answers yet
   const case2: Case = {
     ...demoCase,
     id: 'CUR-20261002-A4F2',
@@ -34,10 +35,10 @@ export async function createDemoCases(): Promise<Case[]> {
     relevantInformation:
       'It started this week and seems to be getting worse.',
     additionalQuestions: makeQuestions([
-      { q: 'Have you noticed any specific triggers that make the symptoms better or worse?', t: 'text' },
+      { q: 'How severe is the sore throat on a scale of 1 to 10?', t: 'scale' },
+      { q: 'Have you tried anything to manage the sore throat?', t: 'yes_no' },
+      { q: 'Have you recently been in contact with anyone who was ill?', t: 'yes_no' },
       { q: 'Are you currently taking any medications or supplements?', t: 'yes_no' },
-      { q: 'How is the concern affecting your daily activities?', t: 'text' },
-      { q: 'Have you tried any home remedies or over-the-counter treatments so far?', t: 'yes_no' },
     ]),
     patientAnswers: [],
     emergencyFlag: false,
@@ -51,30 +52,31 @@ export async function createDemoCases(): Promise<Case[]> {
     ],
   };
 
+  // Case 3: Back pain — patient answered, awaiting more info
   const case3Answers: PatientAnswer[] = [
     {
       questionId: 'demo-q-0',
-      question: 'Can you describe the severity of your symptoms on a scale of 1 to 10?',
+      question: 'How severe is the back pain on a scale of 1 to 10?',
       answerType: 'scale',
       answer: 6,
     },
     {
       questionId: 'demo-q-1',
-      question: 'Have you noticed any specific triggers that make the symptoms better or worse?',
+      question: 'Have you noticed any specific triggers that make the back pain better or worse?',
       answerType: 'text',
       answer: 'The pain is worse in the mornings, especially after waking up.',
     },
     {
       questionId: 'demo-q-2',
-      question: 'Are you currently taking any medications or supplements?',
+      question: 'Have you tried anything to manage the back pain?',
       answerType: 'yes_no',
       answer: 'No',
     },
     {
       questionId: 'demo-q-3',
-      question: 'Do you have any known allergies or pre-existing conditions?',
-      answerType: 'yes_no',
-      answer: 'Prefer not to answer',
+      question: 'Can you describe where the back pain is located?',
+      answerType: 'text',
+      answer: 'Lower back, mostly on the left side.',
     },
   ];
 
@@ -94,10 +96,10 @@ export async function createDemoCases(): Promise<Case[]> {
     relevantInformation:
       "It is worse in the mornings and makes it hard to get out of bed. I have not taken anything for it yet.",
     additionalQuestions: makeQuestions([
-      { q: 'Can you describe the severity of your symptoms on a scale of 1 to 10?', t: 'scale' },
-      { q: 'Have you noticed any specific triggers that make the symptoms better or worse?', t: 'text' },
-      { q: 'Are you currently taking any medications or supplements?', t: 'yes_no' },
-      { q: 'Do you have any known allergies or pre-existing conditions?', t: 'yes_no' },
+      { q: 'How severe is the back pain on a scale of 1 to 10?', t: 'scale' },
+      { q: 'Have you noticed any specific triggers that make the back pain better or worse?', t: 'text' },
+      { q: 'Have you tried anything to manage the back pain?', t: 'yes_no' },
+      { q: 'Can you describe where the back pain is located?', t: 'text' },
     ]),
     patientAnswers: case3Answers,
     emergencyFlag: false,
@@ -120,10 +122,11 @@ export async function createDemoCases(): Promise<Case[]> {
     ],
   };
 
+  // Case 4: Anxiety + insomnia — patient answered, appointment scheduled
   const case4Answers: PatientAnswer[] = [
     {
       questionId: 'demo-q-0',
-      question: 'Have you noticed any specific triggers that make the symptoms better or worse?',
+      question: 'Have you noticed any specific triggers that make the anxiety better or worse?',
       answerType: 'text',
       answer: 'Work deadlines and evening hours tend to make it worse.',
     },
@@ -136,15 +139,15 @@ export async function createDemoCases(): Promise<Case[]> {
     },
     {
       questionId: 'demo-q-2',
-      question: 'How is the concern affecting your daily activities?',
-      answerType: 'text',
-      answer: 'Difficulty concentrating at work due to poor sleep.',
+      question: 'Have you been able to sleep despite the anxiety?',
+      answerType: 'yes_no',
+      answer: 'No',
     },
     {
       questionId: 'demo-q-3',
-      question: 'Have you tried any home remedies or over-the-counter treatments so far?',
-      answerType: 'yes_no',
-      answer: 'No',
+      question: 'Have you noticed any changes in the anxiety throughout the day?',
+      answerType: 'text',
+      answer: 'It tends to peak in the evenings when I am trying to wind down.',
     },
   ];
 
@@ -164,10 +167,10 @@ export async function createDemoCases(): Promise<Case[]> {
     relevantInformation:
       'I feel on edge during the day and cannot seem to relax.',
     additionalQuestions: makeQuestions([
-      { q: 'Have you noticed any specific triggers that make the symptoms better or worse?', t: 'text' },
+      { q: 'Have you noticed any specific triggers that make the anxiety better or worse?', t: 'text' },
       { q: 'Are you currently taking any medications or supplements?', t: 'yes_no' },
-      { q: 'How is the concern affecting your daily activities?', t: 'text' },
-      { q: 'Have you tried any home remedies or over-the-counter treatments so far?', t: 'yes_no' },
+      { q: 'Have you been able to sleep despite the anxiety?', t: 'yes_no' },
+      { q: 'Have you noticed any changes in the anxiety throughout the day?', t: 'text' },
     ]),
     patientAnswers: case4Answers,
     emergencyFlag: false,
@@ -190,24 +193,26 @@ export async function createDemoCases(): Promise<Case[]> {
     ],
   };
 
+  // Case 5: Fever + body aches + congestion — patient answered, accepted
   const case5Answers: PatientAnswer[] = [
     {
       questionId: 'demo-q-0',
-      question: 'Can you describe the severity of your symptoms on a scale of 1 to 10?',
+      question: 'How severe is the fever on a scale of 1 to 10?',
       answerType: 'scale',
       answer: 8,
     },
     {
       questionId: 'demo-q-1',
-      question: 'Have you noticed any specific triggers that make the symptoms better or worse?',
-      answerType: 'text',
-      answer: 'Symptoms seem to worsen in the evening.',
+      question: 'Have you tried anything to manage the fever?',
+      answerType: 'yes_no',
+      answer: 'No',
     },
     {
       questionId: 'demo-q-2',
-      question: 'Are you currently taking any medications or supplements?',
+      question: 'Have you recently been in contact with anyone who was ill?',
       answerType: 'yes_no',
-      answer: 'No',
+      answer: 'Yes',
+      additionalDetails: 'My child had a similar fever last week.',
     },
     {
       questionId: 'demo-q-3',
@@ -234,9 +239,9 @@ export async function createDemoCases(): Promise<Case[]> {
     relevantInformation:
       'I feel chills and have been shivering. I also have a runny nose.',
     additionalQuestions: makeQuestions([
-      { q: 'Can you describe the severity of your symptoms on a scale of 1 to 10?', t: 'scale' },
-      { q: 'Have you noticed any specific triggers that make the symptoms better or worse?', t: 'text' },
-      { q: 'Are you currently taking any medications or supplements?', t: 'yes_no' },
+      { q: 'How severe is the fever on a scale of 1 to 10?', t: 'scale' },
+      { q: 'Have you tried anything to manage the fever?', t: 'yes_no' },
+      { q: 'Have you recently been in contact with anyone who was ill?', t: 'yes_no' },
       { q: 'Has anyone in your household experienced similar symptoms recently?', t: 'yes_no' },
     ]),
     patientAnswers: case5Answers,

@@ -55,15 +55,103 @@ const DURATION_PATTERNS = [
   { regex: /this (morning|afternoon|evening|week|month)/i, label: 'Since $1' },
 ];
 
-const QUESTION_POOL: { question: string; answerType: AnswerType }[] = [
-  { question: 'Can you describe the severity of your symptoms on a scale of 1 to 10?', answerType: 'scale' },
-  { question: 'Have you noticed any specific triggers that make the symptoms better or worse?', answerType: 'text' },
-  { question: 'Are you currently taking any medications or supplements?', answerType: 'yes_no' },
-  { question: 'Do you have any known allergies or pre-existing conditions?', answerType: 'yes_no' },
-  { question: 'Has anyone in your household experienced similar symptoms recently?', answerType: 'yes_no' },
-  { question: 'Have you traveled recently or been in contact with anyone who was ill?', answerType: 'yes_no' },
-  { question: 'How is the concern affecting your daily activities?', answerType: 'text' },
-  { question: 'Have you tried any home remedies or over-the-counter treatments so far?', answerType: 'yes_no' },
+interface QuestionTemplate {
+  question: string;
+  answerType: AnswerType;
+  relevantTo: string[];
+}
+
+const QUESTION_TEMPLATES: QuestionTemplate[] = [
+  {
+    question: 'How severe is the {symptom} on a scale of 1 to 10?',
+    answerType: 'scale',
+    relevantTo: ['Headache', 'Fever', 'Cough', 'Sore throat', 'Abdominal pain', 'Back pain', 'Body aches', 'Joint pain', 'Skin rash', 'Dizziness', 'Nausea'],
+  },
+  {
+    question: 'How would you rate the overall severity of your symptoms on a scale of 1 to 10?',
+    answerType: 'scale',
+    relevantTo: ['__general__'],
+  },
+  {
+    question: 'Have you noticed any specific triggers that make the {symptom} better or worse?',
+    answerType: 'text',
+    relevantTo: ['Headache', 'Back pain', 'Abdominal pain', 'Joint pain', 'Dizziness', 'Anxiety', 'Insomnia', 'Skin rash'],
+  },
+  {
+    question: 'Have you noticed anything that makes your symptoms better or worse?',
+    answerType: 'text',
+    relevantTo: ['__general__'],
+  },
+  {
+    question: 'Have you tried anything to manage the {symptom}?',
+    answerType: 'yes_no',
+    relevantTo: ['Headache', 'Fever', 'Cough', 'Sore throat', 'Abdominal pain', 'Back pain', 'Body aches', 'Nausea', 'Dizziness', 'Skin rash', 'Congestion'],
+  },
+  {
+    question: 'Have you tried any home remedies or over-the-counter treatments so far?',
+    answerType: 'yes_no',
+    relevantTo: ['__general__'],
+  },
+  {
+    question: 'Are you currently taking any medications or supplements?',
+    answerType: 'yes_no',
+    relevantTo: ['__general__'],
+  },
+  {
+    question: 'Do you have any known allergies or pre-existing conditions?',
+    answerType: 'yes_no',
+    relevantTo: ['__general__'],
+  },
+  {
+    question: 'Have you recently been in contact with anyone who was ill?',
+    answerType: 'yes_no',
+    relevantTo: ['Fever', 'Cough', 'Sore throat', 'Congestion', 'Sneezing', 'Body aches', 'Watery eyes'],
+  },
+  {
+    question: 'Has anyone in your household experienced similar symptoms recently?',
+    answerType: 'yes_no',
+    relevantTo: ['Fever', 'Cough', 'Sore throat', 'Congestion', 'Sneezing', 'Body aches', 'Watery eyes'],
+  },
+  {
+    question: 'Have you traveled recently or been in contact with anyone who was ill?',
+    answerType: 'yes_no',
+    relevantTo: ['Fever', 'Cough', 'Sore throat', 'Congestion', 'Sneezing', 'Body aches'],
+  },
+  {
+    question: 'How is the concern affecting your daily activities?',
+    answerType: 'text',
+    relevantTo: ['__general__'],
+  },
+  {
+    question: 'Can you describe where the {symptom} is located?',
+    answerType: 'text',
+    relevantTo: ['Abdominal pain', 'Back pain', 'Joint pain', 'Skin rash'],
+  },
+  {
+    question: 'How would you describe the {symptom} — is it sharp, dull, throbbing, or something else?',
+    answerType: 'text',
+    relevantTo: ['Headache', 'Abdominal pain', 'Back pain', 'Joint pain'],
+  },
+  {
+    question: 'Have you been able to sleep despite the {symptom}?',
+    answerType: 'yes_no',
+    relevantTo: ['Cough', 'Sore throat', 'Anxiety', 'Insomnia', 'Shortness of breath', 'Fever'],
+  },
+  {
+    question: 'Has the {symptom} been affecting your appetite?',
+    answerType: 'yes_no',
+    relevantTo: ['Nausea', 'Vomiting', 'Fever', 'Sore throat'],
+  },
+  {
+    question: 'Have you noticed any changes in the {symptom} throughout the day?',
+    answerType: 'text',
+    relevantTo: ['Back pain', 'Headache', 'Anxiety', 'Insomnia', 'Skin rash'],
+  },
+  {
+    question: 'Have you experienced any similar symptoms in the past?',
+    answerType: 'yes_no',
+    relevantTo: ['Headache', 'Back pain', 'Abdominal pain', 'Dizziness', 'Skin rash', 'Anxiety'],
+  },
 ];
 
 let questionIdCounter = 0;
@@ -128,12 +216,70 @@ function extractRelevantInfo(input: string): string {
   return contextSentences.join('. ');
 }
 
-function generateClarificationQuestions(symptomCount: number): ClarificationQuestion[] {
-  const count = Math.min(symptomCount > 2 ? 4 : 3, QUESTION_POOL.length);
-  const shuffled = [...QUESTION_POOL].sort(() => Math.random() - 0.5);
-  const selected = shuffled.slice(0, count);
+function generateClarificationQuestions(symptoms: string[]): ClarificationQuestion[] {
+  const selected: { question: string; answerType: AnswerType }[] = [];
+  const usedQuestions = new Set<string>();
+  const primarySymptom = symptoms.length > 0 ? symptoms[0].toLowerCase() : 'symptom';
 
-  return selected.map((q) => ({
+  const tryAdd = (template: QuestionTemplate, symptom?: string) => {
+    const questionText = template.question.replace('{symptom}', symptom || primarySymptom);
+    if (usedQuestions.has(template.question)) return false;
+    usedQuestions.add(template.question);
+    selected.push({ question: questionText, answerType: template.answerType });
+    return true;
+  };
+
+  // 1. Try symptom-specific severity question for the primary symptom
+  const severityTemplate = QUESTION_TEMPLATES.find(
+    (t) => t.answerType === 'scale' && t.relevantTo.includes(symptoms[0])
+  );
+  if (severityTemplate) {
+    tryAdd(severityTemplate, symptoms[0].toLowerCase());
+  } else {
+    // Fall back to general severity
+    const generalSeverity = QUESTION_TEMPLATES.find(
+      (t) => t.answerType === 'scale' && t.relevantTo.includes('__general__')
+    );
+    if (generalSeverity) tryAdd(generalSeverity);
+  }
+
+  // 2. Add symptom-specific questions for detected symptoms
+  for (const symptom of symptoms) {
+    if (selected.length >= 4) break;
+    const symptomSpecific = QUESTION_TEMPLATES.filter(
+      (t) =>
+        !t.relevantTo.includes('__general__') &&
+        t.relevantTo.includes(symptom) &&
+        !usedQuestions.has(t.question)
+    );
+    for (const template of symptomSpecific) {
+      if (selected.length >= 4) break;
+      tryAdd(template, symptom.toLowerCase());
+    }
+  }
+
+  // 3. Fill remaining slots with general questions
+  if (selected.length < 2) {
+    const general = QUESTION_TEMPLATES.filter(
+      (t) => t.relevantTo.includes('__general__') && !usedQuestions.has(t.question)
+    );
+    for (const template of general) {
+      if (selected.length >= 4) break;
+      tryAdd(template);
+    }
+  }
+
+  // 4. Ensure at least 2 questions
+  while (selected.length < 2) {
+    const remaining = QUESTION_TEMPLATES.find((t) => !usedQuestions.has(t.question));
+    if (!remaining) break;
+    tryAdd(remaining);
+  }
+
+  // 5. Cap at 5
+  const capped = selected.slice(0, 5);
+
+  return capped.map((q) => ({
     id: makeQuestionId(),
     question: q.question,
     answerType: q.answerType,
@@ -148,7 +294,7 @@ export async function generateCaseSummary(patientInput: string): Promise<CaseSum
   const duration = detectDuration(patientInput);
   const mainConcern = extractMainConcern(patientInput);
   const relevantInformation = extractRelevantInfo(patientInput);
-  const additionalQuestions = generateClarificationQuestions(symptomsMentioned.length);
+  const additionalQuestions = generateClarificationQuestions(symptomsMentioned);
 
   return {
     mainConcern,
