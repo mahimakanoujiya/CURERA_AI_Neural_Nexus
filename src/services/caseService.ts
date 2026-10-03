@@ -21,7 +21,8 @@ function makeTimelineEvent(
 
 export async function createCaseFromInput(
   input: string,
-  inputType: 'voice' | 'text'
+  inputType: 'voice' | 'text',
+  userEmail?: string | null
 ): Promise<Case> {
   const summary = await generateCaseSummary(input);
   const now = nowISO();
@@ -34,6 +35,7 @@ export async function createCaseFromInput(
   return {
     id: generateCaseId(),
     patientId: generatePatientId(),
+    userEmail: userEmail ?? null,
     createdAt: now,
     inputType,
     originalInput: input,

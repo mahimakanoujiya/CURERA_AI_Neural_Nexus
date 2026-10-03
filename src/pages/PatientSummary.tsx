@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Pencil, Send, CheckCircle2 } from 'lucide-react';
 import { useCases } from '@/context/CaseContext';
+import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import CaseSummaryCard from '@/components/CaseSummaryCard';
 import AnswerForm from '@/components/AnswerForm';
@@ -11,6 +12,7 @@ export default function PatientSummary() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getCase, savePatientAnswersById } = useCases();
+  const { user } = useAuth();
   const { showToast } = useToast();
   const [editMode, setEditMode] = useState(false);
   const [editInput, setEditInput] = useState('');
@@ -51,7 +53,7 @@ export default function PatientSummary() {
   const handleSubmitForReview = (answers: PatientAnswer[]) => {
     savePatientAnswersById(caseData.id, answers);
     showToast('Case submitted for professional review', 'success');
-    setTimeout(() => navigate('/professional'), 800);
+    setTimeout(() => navigate(user ? '/my-cases' : '/professional'), 800);
   };
 
   return (

@@ -2,17 +2,21 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mic, Square, Type, Shield, AlertTriangle, Play, Loader2, CheckCircle2, Pencil } from 'lucide-react';
 import { useCases } from '@/context/CaseContext';
+import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { DEMO_TRANSCRIPT, formatTimer, type RecordingState } from '@/services/speechService';
 import { generateCaseSummary } from '@/services/aiService';
 import type { CaseSummary } from '@/types';
 import { SafetyDisclaimer } from '@/components/SafetyBanner';
+import { Link } from 'react-router-dom';
+import { FolderOpen } from 'lucide-react';
 
 type InputMode = 'voice' | 'text';
 
 export default function PatientInput() {
   const navigate = useNavigate();
   const { addCase } = useCases();
+  const { user } = useAuth();
   const { showToast } = useToast();
 
   const [mode, setMode] = useState<InputMode>('voice');
@@ -97,6 +101,12 @@ export default function PatientInput() {
       <div className="text-center mb-8 animate-fade-in-down">
         <h1 className="text-3xl sm:text-4xl font-bold font-display text-ink-900">Just Talk. Curera Listens.</h1>
         <p className="text-ink-500 mt-2">Explain what's happening naturally. No complicated forms.</p>
+        {user && (
+          <Link to="/my-cases" className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700 mt-3 transition-colors">
+            <FolderOpen className="w-4 h-4" />
+            View My Cases
+          </Link>
+        )}
       </div>
 
       {/* Mode toggle */}

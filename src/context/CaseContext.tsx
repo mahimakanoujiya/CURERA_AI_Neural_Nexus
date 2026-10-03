@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode, useCall
 import type { Case, Role, PatientAnswer } from '@/types';
 import { createCaseFromInput, acceptCase, requestMoreInfo, scheduleAppointment, markUnderReview, savePatientAnswers } from '@/services/caseService';
 import { createDemoCases } from '@/services/demoData';
+import { useAuth } from '@/context/AuthContext';
 
 interface CaseContextValue {
   cases: Case[];
@@ -18,10 +19,11 @@ interface CaseContextValue {
 
 const CaseContext = createContext<CaseContextValue | null>(null);
 
-const STORAGE_KEY = 'curera_cases_v3';
+const STORAGE_KEY = 'curera_cases_v4';
 const ROLE_KEY = 'curera_role_v1';
 
 export function CaseProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [cases, setCases] = useState<Case[]>([]);
   const [role, setRoleState] = useState<Role>('patient');
   const [initialized, setInitialized] = useState(false);
@@ -59,10 +61,10 @@ export function CaseProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addCase = useCallback(async (input: string, inputType: 'voice' | 'text') => {
-    const newCase = await createCaseFromInput(input, inputType);
+    const newCase = await createCaseFromInput(input, inputType, user?.email ?? null);
     setCases((prev) => [newCase, ...prev]);
     return newCase;
-  }, []);
+  }, [user?.email]);
 
   const getCase = useCallback((id: string) => cases.find((c) => c.id === id), [cases]);
 
@@ -113,4 +115,11 @@ export function useCases() {
   const ctx = useContext(CaseContext);
   if (!ctx) throw new Error('useCases must be used within CaseProvider');
   return ctx;
+}
+
+export function useMyCases() {
+  const { cases } = useCases();
+  const { user } = useAuth();
+  if (!user?.email) return [];
+  return cases.filter((c) => c.userEmail === user.email);
 }

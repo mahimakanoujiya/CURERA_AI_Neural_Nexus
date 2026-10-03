@@ -68,6 +68,7 @@ export interface CaseSummary {
 export interface Case {
   id: string;
   patientId: string;
+  userEmail: string | null;
   createdAt: string;
   inputType: InputType;
   originalInput: string;
