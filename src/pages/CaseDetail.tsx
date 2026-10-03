@@ -141,8 +141,25 @@ export default function CaseDetail() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <InfoItem label="Patient ID" value={caseData.patientId} />
+              <InfoItem label="Patient Email" value={caseData.userEmail || 'Not signed in'} />
               <InfoItem label="Submitted" value={new Date(caseData.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })} />
               <InfoItem label="Input Type" value={caseData.inputType === 'voice' ? 'Voice' : 'Text'} />
+              <div>
+                <p className="text-xs font-medium text-ink-400 uppercase tracking-wide">Consent</p>
+                <div className={`flex items-center gap-1.5 mt-0.5 ${caseData.consentGiven ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {caseData.consentGiven ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span className="text-sm font-semibold">Given</span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="w-4 h-4" />
+                      <span className="text-sm font-semibold">Not given</span>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -207,7 +224,11 @@ export default function CaseDetail() {
         <div className="space-y-5">
           {/* Action panel */}
           <div className="card p-5 lg:sticky lg:top-20 animate-fade-in-up" style={{ animationDelay: '80ms' }}>
-            <h3 className="text-sm font-bold font-display text-ink-900 mb-4">Professional Actions</h3>
+            <div className="flex items-center gap-2 mb-1">
+              <Stethoscope className="w-4 h-4 text-accent-600" />
+              <h3 className="text-sm font-bold font-display text-ink-900">Professional Actions</h3>
+            </div>
+            <p className="text-[11px] text-ink-400 mb-4">Demo Account — Healthcare Professional</p>
             <div className="space-y-2.5">
               <button
                 onClick={() => setShowAcceptModal(true)}

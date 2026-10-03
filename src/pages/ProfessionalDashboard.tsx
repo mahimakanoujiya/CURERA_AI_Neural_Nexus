@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useCases } from '@/context/CaseContext';
 import StatusBadge from '@/components/StatusBadge';
-import { Clock, AlertCircle, FileText, CalendarClock, ArrowRight, Mic, Type, Activity } from 'lucide-react';
+import { Clock, AlertCircle, FileText, CalendarClock, ArrowRight, Mic, Type, Activity, Stethoscope, Inbox } from 'lucide-react';
 import type { Case, CaseStatus } from '@/types';
 
 function formatRelativeTime(iso: string): string {
@@ -17,6 +17,8 @@ function formatRelativeTime(iso: string): string {
 
 export default function ProfessionalDashboard() {
   const { cases } = useCases();
+
+  const reviewQueue = cases.filter((c) => c.status === 'NEW' || c.status === 'UNDER_REVIEW' || c.status === 'AWAITING_PATIENT_INFO');
 
   const stats: { label: string; value: number; icon: typeof Clock; color: string; bg: string }[] = [
     { label: 'New Cases', value: cases.filter((c) => c.status === 'NEW').length, icon: FileText, color: 'text-brand-600', bg: 'bg-brand-50' },
@@ -35,6 +37,12 @@ export default function ProfessionalDashboard() {
           <h1 className="text-2xl sm:text-3xl font-bold font-display text-ink-900">Professional Dashboard</h1>
         </div>
         <p className="text-sm text-ink-500">Review and manage patient cases submitted through CURERA AI.</p>
+        <div className="flex items-center gap-2 mt-3">
+          <div className="flex items-center gap-2 rounded-lg bg-accent-50 border border-accent-200 px-3 py-1.5">
+            <Stethoscope className="w-4 h-4 text-accent-600" />
+            <span className="text-xs font-semibold text-accent-700">Healthcare Professional — Demo Account</span>
+          </div>
+        </div>
       </div>
 
       {/* Stats */}
@@ -61,7 +69,23 @@ export default function ProfessionalDashboard() {
         })}
       </div>
 
-      {/* Cases */}
+      {/* Review Queue */}
+      {reviewQueue.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Inbox className="w-5 h-5 text-brand-600" />
+            <h2 className="text-lg font-bold font-display text-ink-900">Review Queue</h2>
+            <span className="badge bg-brand-50 text-brand-700 text-[11px]">{reviewQueue.length} awaiting action</span>
+          </div>
+          <div className="card divide-y divide-ink-100 overflow-hidden">
+            {reviewQueue.map((caseData) => (
+              <ReviewQueueRow key={caseData.id} caseData={caseData} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* All Cases */}
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-bold font-display text-ink-900">All Cases</h2>
         <span className="text-xs text-ink-400">{cases.length} total</span>
@@ -80,6 +104,37 @@ export default function ProfessionalDashboard() {
         </div>
       )}
     </div>
+  );
+}
+
+function ReviewQueueRow({ caseData }: { caseData: Case }) {
+  return (
+    <Link
+      to={`/professional/case/${caseData.id}`}
+      className="flex items-center gap-4 p-4 hover:bg-brand-50/30 transition-all group"
+    >
+      <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center flex-shrink-0">
+        {caseData.inputType === 'voice' ? <Mic className="w-5 h-5 text-brand-600" /> : <Type className="w-5 h-5 text-brand-600" />}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-0.5">
+          <span className="text-xs font-mono font-semibold text-ink-400">{caseData.id}</span>
+          <StatusBadge status={caseData.status} size="sm" />
+        </div>
+        <p className="text-sm font-semibold text-ink-800 truncate">{caseData.mainConcern}</p>
+        <div className="flex items-center gap-2 text-xs text-ink-400 mt-0.5">
+          <Clock className="w-3 h-3" />
+          {formatRelativeTime(caseData.createdAt)}
+          {caseData.userEmail && (
+            <>
+              <span className="mx-0.5">·</span>
+              <span className="truncate">{caseData.userEmail}</span>
+            </>
+          )}
+        </div>
+      </div>
+      <ArrowRight className="w-4 h-4 text-brand-500 group-hover:translate-x-1 transition-transform flex-shrink-0" />
+    </Link>
   );
 }
 

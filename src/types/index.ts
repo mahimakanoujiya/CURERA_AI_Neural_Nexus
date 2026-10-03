@@ -69,6 +69,7 @@ export interface Case {
   id: string;
   patientId: string;
   userEmail: string | null;
+  consentGiven: boolean;
   createdAt: string;
   inputType: InputType;
   originalInput: string;

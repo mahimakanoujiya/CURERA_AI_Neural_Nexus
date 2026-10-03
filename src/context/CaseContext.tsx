@@ -8,7 +8,7 @@ interface CaseContextValue {
   cases: Case[];
   role: Role;
   setRole: (role: Role) => void;
-  addCase: (input: string, inputType: 'voice' | 'text') => Promise<Case>;
+  addCase: (input: string, inputType: 'voice' | 'text', consentGiven?: boolean) => Promise<Case>;
   getCase: (id: string) => Case | undefined;
   acceptCaseById: (id: string) => void;
   requestMoreInfoById: (id: string, message: string) => void;
@@ -60,8 +60,8 @@ export function CaseProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(ROLE_KEY, r);
   }, []);
 
-  const addCase = useCallback(async (input: string, inputType: 'voice' | 'text') => {
-    const newCase = await createCaseFromInput(input, inputType, user?.email ?? null);
+  const addCase = useCallback(async (input: string, inputType: 'voice' | 'text', consentGiven: boolean = true) => {
+    const newCase = await createCaseFromInput(input, inputType, user?.email ?? null, consentGiven);
     setCases((prev) => [newCase, ...prev]);
     return newCase;
   }, [user?.email]);

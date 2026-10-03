@@ -22,7 +22,8 @@ function makeTimelineEvent(
 export async function createCaseFromInput(
   input: string,
   inputType: 'voice' | 'text',
-  userEmail?: string | null
+  userEmail?: string | null,
+  consentGiven: boolean = true
 ): Promise<Case> {
   const summary = await generateCaseSummary(input);
   const now = nowISO();
@@ -36,6 +37,7 @@ export async function createCaseFromInput(
     id: generateCaseId(),
     patientId: generatePatientId(),
     userEmail: userEmail ?? null,
+    consentGiven,
     createdAt: now,
     inputType,
     originalInput: input,

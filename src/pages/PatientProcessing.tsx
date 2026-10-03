@@ -6,6 +6,7 @@ import { useCases } from '@/context/CaseContext';
 interface ProcessingState {
   input: string;
   inputType: 'voice' | 'text';
+  consent?: boolean;
 }
 
 const STEPS = [
@@ -43,7 +44,7 @@ export default function PatientProcessing() {
       if (cancelled) return;
 
       try {
-        const newCase = await addCase(state.input, state.inputType);
+        const newCase = await addCase(state.input, state.inputType, state.consent ?? true);
         navigate(`/patient/summary/${newCase.id}`);
       } catch {
         setError(true);

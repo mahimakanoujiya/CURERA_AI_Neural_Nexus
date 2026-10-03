@@ -88,7 +88,7 @@ export default function PatientInput() {
 
   const submitCase = async (input: string) => {
     setShowEmergencyModal(false);
-    navigate('/patient/processing', { state: { input, inputType: mode } });
+    navigate('/patient/processing', { state: { input, inputType: mode, consent } });
   };
 
   const handleEmergencyContinue = async () => {
