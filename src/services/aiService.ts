@@ -1,6 +1,6 @@
 import type { CaseSummary, ClarificationQuestion, AnswerType } from '@/types';
 
-export const DEMO_MODE = true;
+export const DEMO_MODE = true; // Falls back to local rule-based AI when Gemini API key is not configured
 
 const EMERGENCY_KEYWORDS = [
   'chest pain',
@@ -287,6 +287,10 @@ function generateClarificationQuestions(symptoms: string[]): ClarificationQuesti
 }
 
 export async function generateCaseSummary(patientInput: string): Promise<CaseSummary> {
+  const geminiResult = await callGemini(patientInput);
+  if (geminiResult) return geminiResult;
+
+  // Fallback: local rule-based summarization
   await new Promise((resolve) => setTimeout(resolve, 100));
 
   const emergencyFlag = detectEmergency(patientInput);
@@ -304,6 +308,87 @@ export async function generateCaseSummary(patientInput: string): Promise<CaseSum
     additionalQuestions,
     emergencyFlag,
   };
+}
+
+interface GeminiResponse {
+  mainConcern?: unknown;
+  duration?: unknown;
+  symptomsMentioned?: unknown;
+  relevantInformation?: unknown;
+  additionalQuestions?: unknown;
+  emergencyFlag?: unknown;
+}
+
+async function callGemini(patientInput: string): Promise<CaseSummary | null> {
+  try {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) return null;
+
+    const apiUrl = `${supabaseUrl}/functions/v1/gemini-summary`;
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${supabaseKey}`,
+      },
+      body: JSON.stringify({ patientInput }),
+    });
+
+    if (!response.ok) return null;
+
+    const data: GeminiResponse = await response.json();
+    if (!data || (data as Record<string, unknown>).fallback) return null;
+    if (typeof data.mainConcern !== "string") return null;
+
+    const symptoms = Array.isArray(data.symptomsMentioned)
+      ? (data.symptomsMentioned as unknown[]).filter((s): s is string => typeof s === "string")
+      : [];
+
+    const questions = Array.isArray(data.additionalQuestions)
+      ? (data.additionalQuestions as unknown[])
+          .filter((q): q is Record<string, unknown> => q !== null && typeof q === "object")
+          .map((q) => {
+            const question = typeof q.question === "string" ? q.question : "";
+            const rawType = typeof q.answerType === "string" ? q.answerType : "text";
+            const answerType: AnswerType =
+              rawType === "yes_no" || rawType === "scale" || rawType === "text" ? rawType : "text";
+            return { id: makeQuestionId(), question, answerType };
+          })
+          .filter((q) => q.question.length > 0)
+      : [];
+
+    // Ensure at least 2 questions; fill from local generator if Gemini returned too few
+    let finalQuestions = questions;
+    if (finalQuestions.length < 2) {
+      const localQuestions = generateClarificationQuestions(symptoms);
+      const existingTexts = new Set(finalQuestions.map((q) => q.question));
+      for (const lq of localQuestions) {
+        if (finalQuestions.length >= 4) break;
+        if (!existingTexts.has(lq.question)) {
+          finalQuestions.push(lq);
+        }
+      }
+    }
+
+    // Cap at 5
+    finalQuestions = finalQuestions.slice(0, 5);
+
+    return {
+      mainConcern: data.mainConcern,
+      duration: typeof data.duration === "string" ? data.duration : "Not specified by patient",
+      symptomsMentioned: symptoms,
+      relevantInformation:
+        typeof data.relevantInformation === "string"
+          ? data.relevantInformation
+          : "No additional context provided by patient.",
+      additionalQuestions: finalQuestions,
+      emergencyFlag: data.emergencyFlag === true,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export function generateCaseId(): string {
